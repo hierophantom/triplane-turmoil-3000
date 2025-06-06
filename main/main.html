@@ -1,0 +1,128 @@
+<!-- File name and path: main/main.html
+File role: Main frame file -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>✈️ Triplane Turmoil 3000</title>
+    <link rel="stylesheet" href="../style/picnic.min.css" />
+    <link rel="stylesheet" href="../style/global.css" />
+</head>
+
+<body>
+
+    <!-- Main Wrapper -->
+    <div id="main-wrapper">
+        <nav class="tabs">
+          <button class="tab button" data-tab="briefing-room" tabindex="0">Briefing Room</button>
+          <button class="tab button" data-tab="pilot-controls" tabindex="0">Pilot Controls</button>
+          <button class="tab button" data-tab="cockpit-settings" tabindex="0">Cockpit Settings</button>
+          <button class="tab button" data-tab="victory-board" tabindex="0">Victory Board</button>
+          <button class="tab button" data-tab="about" tabindex="0">About</button>
+        </nav>
+        <main id="main-content" tabindex="0">
+            <section id="briefing-room" class="tab-content active">
+                Briefing Room
+
+                <div class="settings-container">
+                    <div class="player-settings-section">
+
+                        <div class="player-quadrant">
+                            <h3>Yellow player</h3>
+                            <div class="button-group">
+                                <button class="button active">Human</button>
+                                <button class="button">AI (Future)</button>
+                                <button class="button">Off</button>
+                            </div>
+                            <label for="yellow-ammo">Ammo</label>
+                            <input type="range" id="yellow-ammo" min="0" max="100" value="50">
+                            <label for="yellow-bombs">Bombs</label>
+                            <input type="range" id="yellow-bombs" min="0" max="100" value="50">
+                            <label for="yellow-gas">Gas</label>
+                            <input type="range" id="yellow-gas" min="0" max="100" value="50">
+                        </div>
+
+                        <div class="player-quadrant">
+                            <h3>Red player</h3>
+                            <div class="button-group">
+                                <button class="button active">Human</button>
+                                <button class="button">AI (Future)</button>
+                                <button class="button">Off</button>
+                            </div>
+                            <label for="red-ammo">Ammo</label>
+                            <input type="range" id="red-ammo" min="0" max="100" value="50">
+                            <label for="red-bombs">Bombs</label>
+                            <input type="range" id="red-bombs" min="0" max="100" value="50">
+                            <label for="red-gas">Gas</label>
+                            <input type="range" id="red-gas" min="0" max="100" value="50">
+                        </div>
+
+                        <div class="player-quadrant">
+                            <h3>Green player</h3>
+                            <div class="button-group">
+                                <button class="button active">Human</button>
+                                <button class="button">AI (Future)</button>
+                                <button class="button">Off</button>
+                            </div>
+                            <label for="green-ammo">Ammo</label>
+                            <input type="range" id="green-ammo" min="0" max="100" value="50">
+                            <label for="green-bombs">Bombs</label>
+                            <input type="range" id="green-bombs" min="0" max="100" value="50">
+                            <label for="green-gas">Gas</label>
+                            <input type="range" id="green-gas" min="0" max="100" value="50">
+                        </div>
+
+                        <div class="player-quadrant">
+                            <h3>Blue player</h3>
+                            <div class="button-group">
+                                <button class="button active">Human</button>
+                                <button class="button">AI (Future)</button>
+                                <button class="button">Off</button>
+                            </div>
+                            <label for="blue-ammo">Ammo</label>
+                            <input type="range" id="blue-ammo" min="0" max="100" value="50">
+                            <label for="blue-bombs">Bombs</label>
+                            <input type="range" id="blue-bombs" min="0" max="100" value="50">
+                            <label for="blue-gas">Gas</label>
+                            <input type="range" id="blue-gas" min="0" max="100" value="50">
+                        </div>
+                    </div>
+
+                    <div class="global-settings-section">
+                        <div class="lives-setting">
+                            <label for="number-of-lives">Number of lives</label>
+                            <input type="range" id="number-of-lives" min="1" max="10" value="3">
+                        </div>
+                        <button class="button fight-button">
+                            Fight!
+                        </button>
+                    </div>
+                </div>
+
+
+                
+            </section>
+            <section id="pilot-controls" class="tab-content">
+                Pilot Controls
+            </section>
+            <section id="cockpit-settings" class="tab-content">
+                Cockpit Settings
+            </section>
+            <section id="victory-board" class="tab-content">
+                Victory Board
+            </section>
+            <section id="about" class="tab-content">
+                About
+            </section>
+        </main>
+    </div>
+
+    <script src="main.js"></script>
+    <script src="../lib/mousetrap.min.js"></script>
+
+</body>
+
+</html>
