@@ -1,4 +1,4 @@
-//File name and path: main/control-systems.js
+//File name and path: objects/control-systems.js
 //File role: Input handling and control schemes for all players
 
 class ControlSystems {

@@ -1,4 +1,4 @@
-//File name and path: main/airplane-models.js
+//File name and path: objects/airplane-models.js
 //File role: Airplane geometries, types, and characteristics
 
 class AirplaneModels {

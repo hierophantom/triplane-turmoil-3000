@@ -1,4 +1,4 @@
-//File name and path: main/game-engine.js
+//File name and path: objects/game-engine.js
 //File role: Main game engine control
 gameLoop() {
     if (!this.isRunning) return;
