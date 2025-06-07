@@ -37,6 +37,11 @@ class NavigationController {
     document.querySelectorAll('.screen').forEach(screen => {
       screen.classList.remove('active');
     });
+   
+    // Special handling for game screen
+    if (screenId === 'game' && typeof window.initializeGame === 'function') {
+      window.initializeGame();
+    }
     
     // Show target screen
     const targetScreen = document.getElementById(screenId);
@@ -163,6 +168,10 @@ class NavigationController {
         break;
       case 'text-input':
         this.enterEditMode(current);
+        break;
+      case 'launch-game':
+        console.log('Launching game!');
+        this.activateScreen('game'); // ← Change this line
         break;
       default:
         // For other elements, just trigger click

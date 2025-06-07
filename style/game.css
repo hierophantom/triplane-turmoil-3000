@@ -1,0 +1,208 @@
+/*File name and path: style/game.css*/
+/*File role: Game screen styling and HUD*/
+
+/*--------------------
+  GAME CONTAINER
+--------------------*/
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: none; /* Hide cursor during gameplay */
+}
+
+/*--------------------
+  GAME HUD OVERLAY
+--------------------*/
+
+#game-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allow clicks to pass through */
+  z-index: 100;
+}
+
+.hud-corner {
+  position: absolute;
+  padding: 1rem;
+  pointer-events: auto; /* Re-enable for interactive elements */
+}
+
+.hud-corner.top-left {
+  top: 0;
+  left: 0;
+}
+
+.hud-corner.top-right {
+  top: 0;
+  right: 0;
+}
+
+.hud-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+}
+
+.hud-corner.bottom-right {
+  bottom: 0;
+  right: 0;
+}
+
+/*--------------------
+  PLAYER INFO
+--------------------*/
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-name {
+  color: #ecf0f1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.player-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.player-color.yellow {
+  background: #f1c40f;
+}
+
+.player-color.red {
+  background: #e74c3c;
+}
+
+.player-color.green {
+  background: #2ecc71;
+}
+
+.player-color.blue {
+  background: #3498db;
+}
+
+/*--------------------
+  DEBUG INFO
+--------------------*/
+
+#debug-info {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1rem;
+  border-radius: 6px;
+  color: #ecf0f1;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+
+#debug-info div {
+  margin-bottom: 0.25rem;
+}
+
+/*--------------------
+  EXIT BUTTON
+--------------------*/
+
+#exit-game {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  pointer-events: auto;
+}
+
+#exit-game:hover {
+  background: rgba(231, 76, 60, 1);
+}
+
+/*--------------------
+  SPLIT SCREEN BORDERS
+--------------------*/
+
+/* Visual indicators for split screen areas */
+#game-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 50;
+  pointer-events: none;
+}
+
+#game-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 50;
+  pointer-events: none;
+}
+
+/*--------------------
+  RESPONSIVE ADJUSTMENTS
+--------------------*/
+
+@media (max-width: 768px) {
+  .player-info {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .player-name {
+    font-size: 0.8rem;
+  }
+  
+  .player-color {
+    width: 12px;
+    height: 12px;
+  }
+  
+  #debug-info {
+    font-size: 0.7rem;
+    padding: 0.5rem;
+  }
+}

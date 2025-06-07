@@ -1,0 +1,73 @@
+<!-- File name and path: main/game.html
+File role: Main game screen with 4-player split view -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>✈️ Triplane Turmoil 3000 - Game</title>
+    <link rel="stylesheet" href="../style/picnic.min.css" />
+    <link rel="stylesheet" href="../style/global.css" />
+    <link rel="stylesheet" href="../style/game.css" />
+</head>
+
+<body>
+
+    <!-- Game Container -->
+    <div id="game-container">
+        <!-- Game HUD Overlay -->
+        <div id="game-hud">
+            <div class="hud-corner top-left">
+                <div class="player-info">
+                    <span class="player-name">Player 1</span>
+                    <div class="player-color yellow"></div>
+                </div>
+            </div>
+            
+            <div class="hud-corner top-right">
+                <div class="player-info">
+                    <span class="player-name">Player 2</span>
+                    <div class="player-color red"></div>
+                </div>
+            </div>
+            
+            <div class="hud-corner bottom-left">
+                <div class="player-info">
+                    <span class="player-name">Player 3</span>
+                    <div class="player-color green"></div>
+                </div>
+            </div>
+            
+            <div class="hud-corner bottom-right">
+                <div class="player-info">
+                    <span class="player-name">Player 4</span>
+                    <div class="player-color blue"></div>
+                </div>
+            </div>
+
+            <!-- Debug Info -->
+            <div id="debug-info">
+                <div>FPS: <span id="fps-counter">60</span></div>
+                <div>Player 1 Pos: <span id="player-pos">0, 0, 0</span></div>
+            </div>
+
+            <!-- Exit Button -->
+            <button id="exit-game" class="button secondary">
+                ✕ Exit Game
+            </button>
+        </div>
+
+        <!-- Three.js Canvas (created by JavaScript) -->
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="../lib/mousetrap.min.js"></script>
+    <script src="game-engine.js"></script>
+
+</body>
+
+</html>
