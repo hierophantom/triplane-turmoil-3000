@@ -1,74 +1,4 @@
 //File name and path: objects/game-engine.js
-//File role: Main game engine control
-gameLoop() {
-    if (!this.isRunning) return;
-
-    const deltaTime = this.clock.getDelta();
-    
-    // Update input systems
-    if (window.ControlSystems) {
-      window.ControlSystems.update();
-    }
-    
-    this.updatePlayers(deltaTime);
-    this.updateCameras();
-    this.updateUI();
-    this.render();
-    
-    requestAnimationFrame(() => this.gameLoop());
-  }
-
-  updatePlayers(deltaTime) {
-    this.players.forEach((airplane, index) => {
-      if (!airplane.isActive) return;
-
-      // Get controls for this player
-      const controls = window.ControlSystems ? window.ControlSystems.getPlayerControls(index) : null;
-      if (!controls) return;
-
-      // Apply flight physics using modular systems
-      this.applyFlightPhysics(airplane, controls, deltaTime);
-      
-      // Update visual aspects
-      if (window.AirplaneModels) {
-        window.AirplaneModels.updateAirplaneVisuals(airplane, deltaTime);
-      }
-
-      // Apply world boundaries
-      this.applyBoundaries(airplane);
-    });
-  }
-
-  applyFlightPhysics(airplane, controls, deltaTime) {
-    // Flight physics constants (could be moved to airplane specs)
-    const thrustPower = 1000 * airplane.acceleration;  // Use airplane's acceleration stat
-    const dragCoefficient = 0.95;
-    const liftCoefficient = 0.03;
-    const gravityForce = 400;
-
-    // Handle throttle
-    if (controls.throttle) {
-      airplane.throttlePower = Math.min(airplane.throttlePower + deltaTime * 2.0, 1.0);
-    } else {
-      airplane.throttlePower = Math.max(airplane.throttlePower - deltaTime * 1.5, 0.0);
-    }
-
-    // Calculate thrust vector
-    const thrustVector = airplane.direction.clone().multiplyScalar(
-      airplane.throttlePower * thrustPower * deltaTime / airplane.weight
-    );
-    airplane.acceleration.add(thrustVector);
-
-    // Handle turning with airplane's turn rate
-    const turnRate = airplane.turnRate;
-    if (controls.turnLeft) {
-      airplane.banking = Math.max(airplane.banking - turnRate * deltaTime, -0.8);
-      const turnAngle = -turnRate * deltaTime;
-      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), turnAngle);
-    } else if (controls.turnRight) {
-      airplane.banking = Math.min(airplane.banking + turnRate * deltaTime, 0.8);
-      const turnAngle = turnRate * deltaTime;
-      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0//File name and path: main/game-engine.js
 //File role: Main game engine with 4-player split screen
 
 class GameEngine {
@@ -77,6 +7,7 @@ class GameEngine {
     this.renderer = null;
     this.cameras = [];
     this.players = [];
+    this.controlSystems = null; // Add this line
     this.worldBounds = {
       x: 5000,  // Half of 10,000
       z: 5000,  // Half of 10,000  
@@ -104,7 +35,8 @@ class GameEngine {
       
       // Initialize control systems
       if (window.ControlSystems) {
-        window.ControlSystems.init();
+        this.controlSystems = new window.ControlSystems();
+        console.log('ControlSystems instance created');
       }
       
       this.start();
@@ -120,11 +52,14 @@ class GameEngine {
 
   setupRenderer() {
     console.log('Setting up renderer...');
-    const canvas = document.getElementById('game-canvas');
+    let canvas = document.getElementById('game-canvas');
     
     if (!canvas) {
-      console.error('Canvas element not found!');
-      return;
+      console.log('Canvas not found, creating one...');
+      // Create canvas element if it doesn't exist
+      canvas = document.createElement('canvas');
+      canvas.id = 'game-canvas';
+      document.body.appendChild(canvas);
     }
     
     this.renderer = new THREE.WebGLRenderer({ 
@@ -286,12 +221,20 @@ class GameEngine {
     ];
 
     for (let i = 0; i < 4; i++) {
-      // Create airplane using AirplaneModels
-      const airplane = window.AirplaneModels.createAirplane(
-        playerTypes[i], 
-        playerColors[i], 
-        i
-      );
+      let airplane;
+      
+      // Create airplane using AirplaneModels if available
+      if (window.AirplaneModels) {
+        const airplaneModels = new window.AirplaneModels();
+        airplane = airplaneModels.createAirplane(
+          playerTypes[i], 
+          playerColors[i], 
+          i
+        );
+      } else {
+        // Fallback airplane creation
+        airplane = this.createPlayer(i, playerColors[i], startPositions[i]);
+      }
       
       // Set position
       airplane.mesh.position.set(
@@ -301,8 +244,8 @@ class GameEngine {
       );
       
       // Register with control system
-      if (window.ControlSystems) {
-        window.ControlSystems.registerPlayer(i);
+      if (this.controlSystems) {
+        this.controlSystems.registerPlayer(i);
       }
       
       airplane.isActive = i === 0; // Only player 1 active for now
@@ -330,25 +273,15 @@ class GameEngine {
       maxSpeed: 800,
       weight: 1.0, // Will vary based on fuel/ammo
       isActive: id === 0, // Only player 1 active for now
-      controls: {
-        // Flight controls
-        noseDown: false,
-        noseUp: false,
-        turnLeft: false,
-        turnRight: false,
-        throttle: false,        // Now just on/off based on key press
-        
-        // Actions
-        fireGun: false,
-        dropBomb: false,
-        hangar: false
-      },
+      
       // Flight characteristics
       speed: 0,
       direction: new THREE.Vector3(0, 0, 1), // Forward direction
       banking: 0, // For turns
       pitch: 0,   // For up/down
-      throttlePower: 0 // Current throttle level (0-1)
+      throttlePower: 0, // Current throttle level (0-1)
+      turnRate: 2.0,
+      type: 'fighter'
     };
   }
 
@@ -431,80 +364,22 @@ class GameEngine {
   }
 
   /*--------------------
-    CONTROLS SETUP
-  --------------------*/
-
-  setupControls() {
-    console.log('Setting up flight controls...');
-    
-    // Ensure canvas has focus for keyboard input
-    const canvas = document.getElementById('game-canvas');
-    canvas.focus();
-    canvas.tabIndex = 0;
-    
-    // Updated flight controls mapping
-    const controls = {
-      // Flight controls
-      'KeyW': 'noseDown',     // W - Nose down (dive)
-      'KeyS': 'noseUp',       // S - Nose up (climb)
-      'KeyA': 'turnLeft',     // A - Turn left
-      'KeyD': 'turnRight',    // D - Turn right
-      'KeyE': 'throttle',     // E - Throttle on/off (toggle)
-      
-      // Actions
-      'KeyR': 'fireGun',      // R - Fire gun
-      'KeyT': 'dropBomb',     // T - Drop bomb
-      'KeyQ': 'hangar'        // Q - Engage hangar
-    };
-
-    // Key down events
-    document.addEventListener('keydown', (event) => {
-      if (event.code in controls) {
-        event.preventDefault();
-        const action = controls[event.code];
-        const player = this.players[0];
-        
-        // Set control to true (no special handling needed)
-        player.controls[action] = true;
-        
-        if (action === 'throttle') {
-          console.log('Throttle ON (held)');
-        }
-      }
-    });
-
-    // Key up events
-    document.addEventListener('keyup', (event) => {
-      if (event.code in controls) {
-        event.preventDefault();
-        const action = controls[event.code];
-        const player = this.players[0];
-        
-        // Set control to false when key released
-        player.controls[action] = false;
-        
-        if (action === 'throttle') {
-          console.log('Throttle OFF (released)');
-        }
-      }
-    });
-
-    console.log('Flight controls ready:');
-    console.log('W - Nose Down | S - Nose Up | A/D - Turn | E - Throttle Toggle');
-    console.log('R - Fire Gun | T - Drop Bomb | Q - Engage Hangar');
-  }
-
-  /*--------------------
     UI SETUP
   --------------------*/
 
   setupUI() {
+    // Create basic UI elements if they don't exist
+    this.createUIElements();
+
     // Exit button
-    document.getElementById('exit-game').addEventListener('click', () => {
-      this.stop();
-      // Return to main menu (you'll need to implement this)
-      window.history.back();
-    });
+    const exitBtn = document.getElementById('exit-game');
+    if (exitBtn) {
+      exitBtn.addEventListener('click', () => {
+        this.stop();
+        // Return to main menu (you'll need to implement this)
+        window.history.back();
+      });
+    }
 
     // Window resize handling
     window.addEventListener('resize', () => {
@@ -512,6 +387,42 @@ class GameEngine {
     });
 
     console.log('UI setup complete');
+  }
+
+  createUIElements() {
+    // Create game container if it doesn't exist
+    let gameContainer = document.getElementById('game-container');
+    if (!gameContainer) {
+      gameContainer = document.createElement('div');
+      gameContainer.id = 'game-container';
+      document.body.appendChild(gameContainer);
+    }
+
+    // Create HUD overlay
+    let gameHUD = document.getElementById('game-hud');
+    if (!gameHUD) {
+      gameHUD = document.createElement('div');
+      gameHUD.id = 'game-hud';
+      gameContainer.appendChild(gameHUD);
+
+      // Create exit button
+      const exitBtn = document.createElement('button');
+      exitBtn.id = 'exit-game';
+      exitBtn.textContent = 'Exit Game';
+      gameHUD.appendChild(exitBtn);
+
+      // Create debug info
+      const debugInfo = document.createElement('div');
+      debugInfo.id = 'debug-info';
+      debugInfo.innerHTML = `
+        <div id="fps-counter">FPS: 0</div>
+        <div id="player-pos">Position: 0, 0, 0</div>
+        <div id="speed-display">Speed: 0</div>
+        <div id="throttle-display">Throttle: OFF</div>
+        <div id="type-display">Type: fighter</div>
+      `;
+      gameHUD.appendChild(debugInfo);
+    }
   }
 
   onWindowResize() {
@@ -548,6 +459,11 @@ class GameEngine {
 
     const deltaTime = this.clock.getDelta();
     
+    // Update input systems
+    if (this.controlSystems) {
+      this.controlSystems.update();
+    }
+    
     this.updatePlayers(deltaTime);
     this.updateCameras();
     this.updateUI();
@@ -556,9 +472,38 @@ class GameEngine {
     requestAnimationFrame(() => this.gameLoop());
   }
 
+
+  updatePlayers(deltaTime) {
+  this.players.forEach((airplane, index) => {
+    if (!airplane.isActive) return;
+
+    const controls = this.controlSystems ? this.controlSystems.getPlayerControls(index) : {};
+    if (!controls) return;
+
+    // Only log when something interesting happens
+    if (controls.throttle && airplane.throttlePower < 0.1) {
+      console.log('Starting throttle for player', index);
+    }
+
+    this.applyFlightPhysics(airplane, controls, deltaTime);
+    
+    if (window.AirplaneModels) {
+      const airplaneModels = new window.AirplaneModels();
+      airplaneModels.updateAirplaneVisuals(airplane, deltaTime);
+    }
+
+    this.applyBoundaries(airplane);
+  });
+}
+
   applyFlightPhysics(airplane, controls, deltaTime) {
+
+      if (controls.throttle || controls.turnLeft || controls.turnRight || controls.noseUp || controls.noseDown) {
+    console.log('Active controls detected:', controls);
+    console.log('Airplane position before:', airplane.mesh.position.clone());
+  }
     // Flight physics constants (could be moved to airplane specs)
-    const thrustPower = 1000 * airplane.acceleration;  // Use airplane's acceleration stat
+    const thrustPower = 1000 * (airplane.acceleration || 1.0);
     const dragCoefficient = 0.95;
     const liftCoefficient = 0.03;
     const gravityForce = 400;
@@ -675,52 +620,43 @@ class GameEngine {
     this.frameCount++;
     if (this.frameCount % 60 === 0) {
       const fps = Math.round(1 / this.clock.getDelta());
-      document.getElementById('fps-counter').textContent = fps;
+      const fpsCounter = document.getElementById('fps-counter');
+      if (fpsCounter) {
+        fpsCounter.textContent = `FPS: ${fps}`;
+      }
     }
 
     // Player flight data
     const player1 = this.players[0];
+    if (!player1) return;
+    
     const pos = player1.mesh.position;
     const speed = Math.round(player1.speed);
     const throttle = Math.round(player1.throttlePower * 100);
-    const controls = this.controlSystems.getPlayerControls(0);
-    const throttleStatus = controls ? (controls.throttle ? 'ON' : 'OFF') : 'OFF';
+    const controls = this.controlSystems ? this.controlSystems.getPlayerControls(0) : {};
+    const throttleStatus = controls && controls.throttle ? 'ON' : 'OFF';
     
     // Update position display
-    document.getElementById('player-pos').textContent = 
-      `${Math.round(pos.x)}, ${Math.round(pos.y)}, ${Math.round(pos.z)}`;
+    const playerPosEl = document.getElementById('player-pos');
+    if (playerPosEl) {
+      playerPosEl.textContent = `Position: ${Math.round(pos.x)}, ${Math.round(pos.y)}, ${Math.round(pos.z)}`;
+    }
 
-    // Add flight data if elements exist, or create them
-    let speedDisplay = document.getElementById('speed-display');
-    if (!speedDisplay) {
-      const debugInfo = document.getElementById('debug-info');
-      const speedDiv = document.createElement('div');
-      speedDiv.id = 'speed-display';
-      debugInfo.appendChild(speedDiv);
-      speedDisplay = speedDiv;
+    // Update flight data
+    const speedDisplay = document.getElementById('speed-display');
+    if (speedDisplay) {
+      speedDisplay.textContent = `Speed: ${speed} units/s`;
     }
     
-    let throttleDisplay = document.getElementById('throttle-display');
-    if (!throttleDisplay) {
-      const debugInfo = document.getElementById('debug-info');
-      const throttleDiv = document.createElement('div');
-      throttleDiv.id = 'throttle-display';
-      debugInfo.appendChild(throttleDiv);
-      throttleDisplay = throttleDiv;
+    const throttleDisplay = document.getElementById('throttle-display');
+    if (throttleDisplay) {
+      throttleDisplay.textContent = `Throttle: ${throttleStatus} (${throttle}%)`;
     }
 
-    let typeDisplay = document.getElementById('type-display');
-    if (!typeDisplay) {
-      const debugInfo = document.getElementById('debug-info');
-      const typeDiv = document.createElement('div');
-      typeDiv.id = 'type-display';
-      debugInfo.appendChild(typeDiv);
-      typeDisplay = typeDiv;
+    const typeDisplay = document.getElementById('type-display');
+    if (typeDisplay) {
+      typeDisplay.textContent = `Type: ${player1.type} (${player1.maxSpeed} max)`;
     }
-
-    speedDisplay.textContent = `Speed: ${speed} units/s`;
-    throttleDisplay.textContent = `Throttle: ${throttleStatus} (${throttle}%)`;
-    typeDisplay.textContent = `Type: ${player1.type} (${player1.maxSpeed} max)`;
   }
 
   render() {
@@ -772,7 +708,9 @@ window.initializeGame = () => {
     console.log('Creating new GameEngine...');
     gameEngine = new GameEngine();
   } else {
-    console.log('GameEngine already exists');
+    console.log('GameEngine already exists, restarting...');
+    gameEngine.stop();
+    gameEngine = new GameEngine();
   }
 };
 
@@ -793,7 +731,7 @@ window.debugGame = () => {
   if (gameEngine.players && gameEngine.players.length > 0) {
     const p1 = gameEngine.players[0];
     console.log('- Player 1 position:', p1.mesh.position);
-    console.log('- Player 1 throttle:', p1.controls.throttleOn);
+    console.log('- Player 1 throttle:', p1.throttlePower);
   }
 };
 

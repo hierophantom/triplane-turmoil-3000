@@ -125,6 +125,7 @@ class ControlSystems {
   setupEventListeners() {
     // Keyboard events
     document.addEventListener('keydown', (event) => {
+      console.log('Key pressed:', event.code); // Add this debug line
       this.handleKeyDown(event);
     });
 
@@ -150,39 +151,53 @@ class ControlSystems {
   --------------------*/
 
   handleKeyDown(event) {
-    event.preventDefault();
+  event.preventDefault();
+  
+  // Only log if this is a NEW keypress (not a repeat)
+  if (!this.keyStates[event.code]) {
+    console.log('NEW Key pressed:', event.code);
+  }
+  this.keyStates[event.code] = true;
+  
+  // Find which player(s) use this key
+  this.players.forEach(player => {
+    if (!player) return;
     
-    // Find which player(s) use this key
-    this.players.forEach(player => {
-      if (!player) return;
-      
-      const scheme = this.controlSchemes[player.scheme];
-      if (scheme && scheme.type === 'keyboard') {
-        const action = scheme.keys[event.code];
-        if (action) {
-          player.controls[action] = true;
+    const scheme = this.controlSchemes[player.scheme];
+    if (scheme && scheme.type === 'keyboard') {
+      const action = scheme.keys[event.code];
+      if (action) {
+        player.controls[action] = true;
+        // Only log once per new keypress
+        if (!this.keyStates[event.code + '_logged']) {
           console.log(`Player ${player.id}: ${action} ON`);
+          this.keyStates[event.code + '_logged'] = true;
         }
       }
-    });
-  }
+    }
+  });
+}
 
   handleKeyUp(event) {
-    event.preventDefault();
+  event.preventDefault();
+  
+  this.keyStates[event.code] = false;
+  this.keyStates[event.code + '_logged'] = false; // Reset logging flag
+  
+  // Find which player(s) use this key
+  this.players.forEach(player => {
+    if (!player) return;
     
-    // Find which player(s) use this key
-    this.players.forEach(player => {
-      if (!player) return;
-      
-      const scheme = this.controlSchemes[player.scheme];
-      if (scheme && scheme.type === 'keyboard') {
-        const action = scheme.keys[event.code];
-        if (action) {
-          player.controls[action] = false;
-        }
+    const scheme = this.controlSchemes[player.scheme];
+    if (scheme && scheme.type === 'keyboard') {
+      const action = scheme.keys[event.code];
+      if (action) {
+        player.controls[action] = false;
       }
-    });
-  }
+    }
+  });
+}
+
 
   /*--------------------
     GAMEPAD HANDLING

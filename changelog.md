@@ -1,3 +1,6 @@
+06
+View is back but no controls
+
 05
 Error - black screen
 
