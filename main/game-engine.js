@@ -1,4 +1,74 @@
 //File name and path: main/game-engine.js
+//File role: Main game engine control
+gameLoop() {
+    if (!this.isRunning) return;
+
+    const deltaTime = this.clock.getDelta();
+    
+    // Update input systems
+    if (window.ControlSystems) {
+      window.ControlSystems.update();
+    }
+    
+    this.updatePlayers(deltaTime);
+    this.updateCameras();
+    this.updateUI();
+    this.render();
+    
+    requestAnimationFrame(() => this.gameLoop());
+  }
+
+  updatePlayers(deltaTime) {
+    this.players.forEach((airplane, index) => {
+      if (!airplane.isActive) return;
+
+      // Get controls for this player
+      const controls = window.ControlSystems ? window.ControlSystems.getPlayerControls(index) : null;
+      if (!controls) return;
+
+      // Apply flight physics using modular systems
+      this.applyFlightPhysics(airplane, controls, deltaTime);
+      
+      // Update visual aspects
+      if (window.AirplaneModels) {
+        window.AirplaneModels.updateAirplaneVisuals(airplane, deltaTime);
+      }
+
+      // Apply world boundaries
+      this.applyBoundaries(airplane);
+    });
+  }
+
+  applyFlightPhysics(airplane, controls, deltaTime) {
+    // Flight physics constants (could be moved to airplane specs)
+    const thrustPower = 1000 * airplane.acceleration;  // Use airplane's acceleration stat
+    const dragCoefficient = 0.95;
+    const liftCoefficient = 0.03;
+    const gravityForce = 400;
+
+    // Handle throttle
+    if (controls.throttle) {
+      airplane.throttlePower = Math.min(airplane.throttlePower + deltaTime * 2.0, 1.0);
+    } else {
+      airplane.throttlePower = Math.max(airplane.throttlePower - deltaTime * 1.5, 0.0);
+    }
+
+    // Calculate thrust vector
+    const thrustVector = airplane.direction.clone().multiplyScalar(
+      airplane.throttlePower * thrustPower * deltaTime / airplane.weight
+    );
+    airplane.acceleration.add(thrustVector);
+
+    // Handle turning with airplane's turn rate
+    const turnRate = airplane.turnRate;
+    if (controls.turnLeft) {
+      airplane.banking = Math.max(airplane.banking - turnRate * deltaTime, -0.8);
+      const turnAngle = -turnRate * deltaTime;
+      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), turnAngle);
+    } else if (controls.turnRight) {
+      airplane.banking = Math.min(airplane.banking + turnRate * deltaTime, 0.8);
+      const turnAngle = turnRate * deltaTime;
+      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0//File name and path: main/game-engine.js
 //File role: Main game engine with 4-player split screen
 
 class GameEngine {
@@ -17,20 +87,31 @@ class GameEngine {
     this.clock = new THREE.Clock();
     this.frameCount = 0;
     
-    console.log('GameEngine initialized');
+    console.log('GameEngine initialized with modular systems');
     this.init();
   }
 
   init() {
-    this.setupRenderer();
-    this.setupScene();
-    this.setupLighting();
-    this.setupWorld();
-    this.setupPlayers();
-    this.setupCameras();
-    this.setupControls();
-    this.setupUI();
-    this.start();
+    console.log('GameEngine initializing...');
+    try {
+      this.setupRenderer();
+      this.setupScene();
+      this.setupLighting();
+      this.setupWorld();
+      this.setupPlayers();
+      this.setupCameras();
+      this.setupUI();
+      
+      // Initialize control systems
+      if (window.ControlSystems) {
+        window.ControlSystems.init();
+      }
+      
+      this.start();
+      console.log('GameEngine initialization complete');
+    } catch (error) {
+      console.error('GameEngine initialization failed:', error);
+    }
   }
 
   /*--------------------
@@ -38,7 +119,13 @@ class GameEngine {
   --------------------*/
 
   setupRenderer() {
+    console.log('Setting up renderer...');
     const canvas = document.getElementById('game-canvas');
+    
+    if (!canvas) {
+      console.error('Canvas element not found!');
+      return;
+    }
     
     this.renderer = new THREE.WebGLRenderer({ 
       canvas: canvas,
@@ -190,6 +277,7 @@ class GameEngine {
 
   setupPlayers() {
     const playerColors = [0xf1c40f, 0xe74c3c, 0x2ecc71, 0x3498db]; // Yellow, Red, Green, Blue
+    const playerTypes = ['fighter', 'fighter', 'scout', 'bomber']; // Different types for variety
     const startPositions = [
       { x: -500, y: 100, z: -500 },
       { x: 500, y: 100, z: -500 },
@@ -198,37 +286,114 @@ class GameEngine {
     ];
 
     for (let i = 0; i < 4; i++) {
-      const player = this.createPlayer(i, playerColors[i], startPositions[i]);
-      this.players.push(player);
-      this.scene.add(player.mesh);
+      // Create airplane using AirplaneModels
+      const airplane = window.AirplaneModels.createAirplane(
+        playerTypes[i], 
+        playerColors[i], 
+        i
+      );
+      
+      // Set position
+      airplane.mesh.position.set(
+        startPositions[i].x, 
+        startPositions[i].y, 
+        startPositions[i].z
+      );
+      
+      // Register with control system
+      if (window.ControlSystems) {
+        window.ControlSystems.registerPlayer(i);
+      }
+      
+      airplane.isActive = i === 0; // Only player 1 active for now
+      
+      this.players.push(airplane);
+      this.scene.add(airplane.mesh);
     }
 
     console.log('Players setup complete');
   }
 
   createPlayer(id, color, position) {
-    // Simple cube for now (will be aircraft later)
-    const geometry = new THREE.BoxGeometry(50, 20, 100);
-    const material = new THREE.MeshLambertMaterial({ color: color });
-    const mesh = new THREE.Mesh(geometry, material);
+    // Create airplane geometry instead of simple cube
+    const airplane = this.createAirplaneModel(color);
     
-    mesh.position.set(position.x, position.y, position.z);
-    mesh.castShadow = true;
+    airplane.position.set(position.x, position.y, position.z);
+    airplane.castShadow = true;
+    airplane.receiveShadow = true;
     
     return {
       id: id,
-      mesh: mesh,
+      mesh: airplane,
       velocity: new THREE.Vector3(0, 0, 0),
+      acceleration: new THREE.Vector3(0, 0, 0),
+      maxSpeed: 800,
+      weight: 1.0, // Will vary based on fuel/ammo
       isActive: id === 0, // Only player 1 active for now
       controls: {
-        forward: false,
-        backward: false,
-        left: false,
-        right: false,
-        up: false,
-        down: false
-      }
+        // Flight controls
+        noseDown: false,
+        noseUp: false,
+        turnLeft: false,
+        turnRight: false,
+        throttle: false,        // Now just on/off based on key press
+        
+        // Actions
+        fireGun: false,
+        dropBomb: false,
+        hangar: false
+      },
+      // Flight characteristics
+      speed: 0,
+      direction: new THREE.Vector3(0, 0, 1), // Forward direction
+      banking: 0, // For turns
+      pitch: 0,   // For up/down
+      throttlePower: 0 // Current throttle level (0-1)
     };
+  }
+
+  createAirplaneModel(color) {
+    const group = new THREE.Group();
+    
+    // Main body (cube)
+    const bodyGeometry = new THREE.BoxGeometry(80, 20, 40); // width, height, depth
+    const bodyMaterial = new THREE.MeshLambertMaterial({ color: color });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.set(0, 0, 0);
+    group.add(body);
+    
+    // Wings (simple flat rectangles)
+    const wingGeometry = new THREE.BoxGeometry(120, 4, 15); // wide, thin wings
+    const wingMaterial = new THREE.MeshLambertMaterial({ color: color });
+    const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+    wings.position.set(0, -2, 0); // Slightly below body
+    group.add(wings);
+    
+    // Left wheel
+    const wheelGeometry = new THREE.CylinderGeometry(8, 8, 4, 8); // radius, radius, height, segments
+    const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 }); // Dark gray
+    const leftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    leftWheel.position.set(-25, -15, 5); // Left side, below body, slightly forward
+    leftWheel.rotation.z = Math.PI / 2; // Rotate to be like a wheel
+    group.add(leftWheel);
+    
+    // Right wheel  
+    const rightWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    rightWheel.position.set(25, -15, 5); // Right side, below body, slightly forward
+    rightWheel.rotation.z = Math.PI / 2; // Rotate to be like a wheel
+    group.add(rightWheel);
+    
+    // Simple propeller (just a thin rectangle)
+    const propGeometry = new THREE.BoxGeometry(2, 40, 2); // thin, long blade
+    const propMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+    const propeller = new THREE.Mesh(propGeometry, propMaterial);
+    propeller.position.set(45, 0, 0); // Front of the plane
+    group.add(propeller);
+    
+    // Store propeller reference for animation
+    group.userData.propeller = propeller;
+    
+    return group;
   }
 
   /*--------------------
@@ -236,15 +401,19 @@ class GameEngine {
   --------------------*/
 
   setupCameras() {
+    console.log('Setting up cameras...');
     const aspect = (window.innerWidth / 2) / (window.innerHeight / 2); // Split screen aspect ratio
     
     for (let i = 0; i < 4; i++) {
       const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
+      // Set initial camera position for debugging
+      camera.position.set(0, 200, -300);
+      camera.lookAt(0, 0, 0);
       this.cameras.push(camera);
     }
 
     this.updateCameras();
-    console.log('Cameras setup complete');
+    console.log('Cameras setup complete, camera count:', this.cameras.length);
   }
 
   updateCameras() {
@@ -266,28 +435,63 @@ class GameEngine {
   --------------------*/
 
   setupControls() {
-    // Player 1 controls (WASD)
-    Mousetrap.bind('w', () => { this.players[0].controls.forward = true; });
-    Mousetrap.bind('s', () => { this.players[0].controls.backward = true; });
-    Mousetrap.bind('a', () => { this.players[0].controls.left = true; });
-    Mousetrap.bind('d', () => { this.players[0].controls.right = true; });
-    Mousetrap.bind('space', () => { this.players[0].controls.up = true; });
-    Mousetrap.bind('shift', () => { this.players[0].controls.down = true; });
+    console.log('Setting up flight controls...');
+    
+    // Ensure canvas has focus for keyboard input
+    const canvas = document.getElementById('game-canvas');
+    canvas.focus();
+    canvas.tabIndex = 0;
+    
+    // Updated flight controls mapping
+    const controls = {
+      // Flight controls
+      'KeyW': 'noseDown',     // W - Nose down (dive)
+      'KeyS': 'noseUp',       // S - Nose up (climb)
+      'KeyA': 'turnLeft',     // A - Turn left
+      'KeyD': 'turnRight',    // D - Turn right
+      'KeyE': 'throttle',     // E - Throttle on/off (toggle)
+      
+      // Actions
+      'KeyR': 'fireGun',      // R - Fire gun
+      'KeyT': 'dropBomb',     // T - Drop bomb
+      'KeyQ': 'hangar'        // Q - Engage hangar
+    };
 
-    // Key release events
-    document.addEventListener('keyup', (event) => {
-      const player = this.players[0];
-      switch(event.code) {
-        case 'KeyW': player.controls.forward = false; break;
-        case 'KeyS': player.controls.backward = false; break;
-        case 'KeyA': player.controls.left = false; break;
-        case 'KeyD': player.controls.right = false; break;
-        case 'Space': player.controls.up = false; break;
-        case 'ShiftLeft': player.controls.down = false; break;
+    // Key down events
+    document.addEventListener('keydown', (event) => {
+      if (event.code in controls) {
+        event.preventDefault();
+        const action = controls[event.code];
+        const player = this.players[0];
+        
+        // Set control to true (no special handling needed)
+        player.controls[action] = true;
+        
+        if (action === 'throttle') {
+          console.log('Throttle ON (held)');
+        }
       }
     });
 
-    console.log('Controls setup complete');
+    // Key up events
+    document.addEventListener('keyup', (event) => {
+      if (event.code in controls) {
+        event.preventDefault();
+        const action = controls[event.code];
+        const player = this.players[0];
+        
+        // Set control to false when key released
+        player.controls[action] = false;
+        
+        if (action === 'throttle') {
+          console.log('Throttle OFF (released)');
+        }
+      }
+    });
+
+    console.log('Flight controls ready:');
+    console.log('W - Nose Down | S - Nose Up | A/D - Turn | E - Throttle Toggle');
+    console.log('R - Fire Gun | T - Drop Bomb | Q - Engage Hangar');
   }
 
   /*--------------------
@@ -352,82 +556,179 @@ class GameEngine {
     requestAnimationFrame(() => this.gameLoop());
   }
 
-  updatePlayers(deltaTime) {
-    this.players.forEach(player => {
-      if (!player.isActive) return;
+  applyFlightPhysics(airplane, controls, deltaTime) {
+    // Flight physics constants (could be moved to airplane specs)
+    const thrustPower = 1000 * airplane.acceleration;  // Use airplane's acceleration stat
+    const dragCoefficient = 0.95;
+    const liftCoefficient = 0.03;
+    const gravityForce = 400;
 
-      const speed = 300; // Units per second
-      const moveDistance = speed * deltaTime;
+    // Handle throttle
+    if (controls.throttle) {
+      airplane.throttlePower = Math.min(airplane.throttlePower + deltaTime * 2.0, 1.0);
+    } else {
+      airplane.throttlePower = Math.max(airplane.throttlePower - deltaTime * 1.5, 0.0);
+    }
 
-      // Apply controls
-      if (player.controls.forward) player.velocity.z += moveDistance;
-      if (player.controls.backward) player.velocity.z -= moveDistance;
-      if (player.controls.left) player.velocity.x -= moveDistance;
-      if (player.controls.right) player.velocity.x += moveDistance;
-      if (player.controls.up) player.velocity.y += moveDistance;
-      if (player.controls.down) player.velocity.y -= moveDistance;
+    // Calculate thrust vector
+    const thrustVector = airplane.direction.clone().multiplyScalar(
+      airplane.throttlePower * thrustPower * deltaTime / airplane.weight
+    );
+    airplane.acceleration.add(thrustVector);
 
-      // Apply drag
-      player.velocity.multiplyScalar(0.9);
+    // Handle turning with airplane's turn rate
+    const turnRate = airplane.turnRate;
+    if (controls.turnLeft) {
+      airplane.banking = Math.max(airplane.banking - turnRate * deltaTime, -0.8);
+      const turnAngle = -turnRate * deltaTime;
+      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), turnAngle);
+    } else if (controls.turnRight) {
+      airplane.banking = Math.min(airplane.banking + turnRate * deltaTime, 0.8);
+      const turnAngle = turnRate * deltaTime;
+      airplane.direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), turnAngle);
+    } else {
+      airplane.banking *= 0.92;
+    }
 
-      // Update position
-      player.mesh.position.add(player.velocity.clone().multiplyScalar(deltaTime));
+    // Handle pitch (nose up/down)
+    const pitchRate = 1.5;
+    if (controls.noseDown) {
+      airplane.pitch = Math.max(airplane.pitch - pitchRate * deltaTime, -0.8);
+      airplane.direction.y = Math.max(airplane.direction.y - pitchRate * deltaTime * 0.4, -0.6);
+    } else if (controls.noseUp) {
+      airplane.pitch = Math.min(airplane.pitch + pitchRate * deltaTime, 0.8);
+      airplane.direction.y = Math.min(airplane.direction.y + pitchRate * deltaTime * 0.4, 0.6);
+    } else {
+      airplane.pitch *= 0.96;
+      airplane.direction.y *= 0.98;
+    }
 
-      // Apply world boundaries
-      this.applyBoundaries(player);
-    });
+    // Normalize direction
+    airplane.direction.normalize();
+
+    // Apply gravity
+    airplane.acceleration.y -= gravityForce * deltaTime;
+
+    // Generate lift based on speed
+    const currentSpeed = airplane.velocity.length();
+    const liftForce = currentSpeed * liftCoefficient;
+    airplane.acceleration.y += liftForce * deltaTime;
+
+    // Apply drag
+    const dragForce = airplane.velocity.clone().multiplyScalar(-dragCoefficient * deltaTime);
+    airplane.acceleration.add(dragForce);
+
+    // Update velocity
+    airplane.velocity.add(airplane.acceleration.clone().multiplyScalar(deltaTime));
+    
+    // Apply speed limit
+    if (airplane.velocity.length() > airplane.maxSpeed) {
+      airplane.velocity.normalize().multiplyScalar(airplane.maxSpeed);
+    }
+
+    // Update position
+    airplane.mesh.position.add(airplane.velocity.clone().multiplyScalar(deltaTime));
+
+    // Reset acceleration for next frame
+    airplane.acceleration.set(0, 0, 0);
+
+    // Update current speed
+    airplane.speed = airplane.velocity.length();
   }
 
-  applyBoundaries(player) {
-    const pos = player.mesh.position;
+  applyBoundaries(airplane) {
+    const pos = airplane.mesh.position;
     
     // X boundaries
     if (pos.x > this.worldBounds.x) {
       pos.x = this.worldBounds.x;
-      player.velocity.x = 0;
+      airplane.velocity.x = 0;
     }
     if (pos.x < -this.worldBounds.x) {
       pos.x = -this.worldBounds.x;
-      player.velocity.x = 0;
+      airplane.velocity.x = 0;
     }
     
     // Z boundaries
     if (pos.z > this.worldBounds.z) {
       pos.z = this.worldBounds.z;
-      player.velocity.z = 0;
+      airplane.velocity.z = 0;
     }
     if (pos.z < -this.worldBounds.z) {
       pos.z = -this.worldBounds.z;
-      player.velocity.z = 0;
+      airplane.velocity.z = 0;
     }
     
     // Y boundaries
     if (pos.y > this.worldBounds.y) {
       pos.y = this.worldBounds.y;
-      player.velocity.y = 0;
+      airplane.velocity.y = 0;
     }
     if (pos.y < 10) { // Ground level
       pos.y = 10;
-      player.velocity.y = 0;
+      airplane.velocity.y = 0;
     }
   }
 
   updateUI() {
     // FPS counter
     this.frameCount++;
-    if (this.frameCount % 60 === 0) { // Update every 60 frames
+    if (this.frameCount % 60 === 0) {
       const fps = Math.round(1 / this.clock.getDelta());
       document.getElementById('fps-counter').textContent = fps;
     }
 
-    // Player position
+    // Player flight data
     const player1 = this.players[0];
     const pos = player1.mesh.position;
+    const speed = Math.round(player1.speed);
+    const throttle = Math.round(player1.throttlePower * 100);
+    const controls = this.controlSystems.getPlayerControls(0);
+    const throttleStatus = controls ? (controls.throttle ? 'ON' : 'OFF') : 'OFF';
+    
+    // Update position display
     document.getElementById('player-pos').textContent = 
       `${Math.round(pos.x)}, ${Math.round(pos.y)}, ${Math.round(pos.z)}`;
+
+    // Add flight data if elements exist, or create them
+    let speedDisplay = document.getElementById('speed-display');
+    if (!speedDisplay) {
+      const debugInfo = document.getElementById('debug-info');
+      const speedDiv = document.createElement('div');
+      speedDiv.id = 'speed-display';
+      debugInfo.appendChild(speedDiv);
+      speedDisplay = speedDiv;
+    }
+    
+    let throttleDisplay = document.getElementById('throttle-display');
+    if (!throttleDisplay) {
+      const debugInfo = document.getElementById('debug-info');
+      const throttleDiv = document.createElement('div');
+      throttleDiv.id = 'throttle-display';
+      debugInfo.appendChild(throttleDiv);
+      throttleDisplay = throttleDiv;
+    }
+
+    let typeDisplay = document.getElementById('type-display');
+    if (!typeDisplay) {
+      const debugInfo = document.getElementById('debug-info');
+      const typeDiv = document.createElement('div');
+      typeDiv.id = 'type-display';
+      debugInfo.appendChild(typeDiv);
+      typeDisplay = typeDiv;
+    }
+
+    speedDisplay.textContent = `Speed: ${speed} units/s`;
+    throttleDisplay.textContent = `Throttle: ${throttleStatus} (${throttle}%)`;
+    typeDisplay.textContent = `Type: ${player1.type} (${player1.maxSpeed} max)`;
   }
 
   render() {
+    if (!this.renderer || !this.scene || this.cameras.length === 0) {
+      console.error('Render failed: Missing renderer, scene, or cameras');
+      return;
+    }
+
     const width = window.innerWidth;
     const height = window.innerHeight;
     
@@ -444,12 +745,17 @@ class GameEngine {
     ];
 
     viewports.forEach((viewport, index) => {
-      this.renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
-      this.renderer.setScissor(viewport.x, viewport.y, viewport.width, viewport.height);
-      this.renderer.setScissorTest(true);
-      
-      this.renderer.render(this.scene, this.cameras[index]);
+      if (this.cameras[index]) {
+        this.renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+        this.renderer.setScissor(viewport.x, viewport.y, viewport.width, viewport.height);
+        this.renderer.setScissorTest(true);
+        
+        this.renderer.render(this.scene, this.cameras[index]);
+      }
     });
+
+    // Disable scissor test after rendering
+    this.renderer.setScissorTest(false);
   }
 }
 
@@ -461,9 +767,33 @@ let gameEngine = null;
 
 // Function to be called by navigation system
 window.initializeGame = () => {
+  console.log('initializeGame called');
   if (!gameEngine) {
-    console.log('Starting game engine...');
+    console.log('Creating new GameEngine...');
     gameEngine = new GameEngine();
+  } else {
+    console.log('GameEngine already exists');
+  }
+};
+
+// Debug function to check game state
+window.debugGame = () => {
+  if (!gameEngine) {
+    console.log('❌ GameEngine not initialized');
+    return;
+  }
+  
+  console.log('🎮 GameEngine Debug Info:');
+  console.log('- Scene objects:', gameEngine.scene ? gameEngine.scene.children.length : 'No scene');
+  console.log('- Players:', gameEngine.players ? gameEngine.players.length : 'No players');
+  console.log('- Cameras:', gameEngine.cameras ? gameEngine.cameras.length : 'No cameras');
+  console.log('- Renderer:', gameEngine.renderer ? 'Present' : 'Missing');
+  console.log('- Running:', gameEngine.isRunning);
+  
+  if (gameEngine.players && gameEngine.players.length > 0) {
+    const p1 = gameEngine.players[0];
+    console.log('- Player 1 position:', p1.mesh.position);
+    console.log('- Player 1 throttle:', p1.controls.throttleOn);
   }
 };
 
