@@ -1,5 +1,5 @@
 <!-- File name and path: main/main.html
-File role: Main frame file - Clean screen-based navigation -->
+File role: Main frame file - Screen-based navigation -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +9,6 @@ File role: Main frame file - Clean screen-based navigation -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>✈️ Triplane Turmoil 3000</title>
     <link rel="stylesheet" href="../lib/picnic.min.css" />
-    <link rel="stylesheet" href="../style/global.css" />
     <link rel="stylesheet" href="../style/screens.css" />
 </head>
 
@@ -17,26 +16,25 @@ File role: Main frame file - Clean screen-based navigation -->
 
     <!-- Main Menu Screen -->
     <div id="main-menu" class="screen active" data-screen="main-menu">
-        <header class="game-header">
+        <header class="main-header">
             <h1 class="h1">✈️ Triplane Turmoil 3000</h1>
+            <p class="h3">Aerial Combat Simulator</p>
         </header>
 
         <nav class="main-menu-nav">
-            <button class="menu-item focusable" id="start-game-btn" data-action="start-game">
-                <span class="menu-icon">🎮</span>
-                <span class="menu-text">Start Game</span>
+            <button class="button focusable menu-item" id="start-game-btn" data-action="start-game">
+                <span>🎮 Start Game</span>
             </button>
             
-            <button class="menu-item focusable" id="configurations-btn" data-action="configurations">
-                <span class="menu-icon">⚙️</span>
-                <span class="menu-text">Configurations</span>
+            <button class="button focusable menu-item" id="configurations-btn" data-action="configurations">
+                <span>⚙️ Configurations</span>
             </button>
         </nav>
 
         <section class="scoreboard-section">
-            <h3 class="scoreboard-title">Recent Scores</h3>
+            <h3 class="h3">Recent Scores</h3>
             <div class="scoreboard-container">
-                <table class="scoreboard-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Player</th>
@@ -44,7 +42,7 @@ File role: Main frame file - Clean screen-based navigation -->
                             <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody id="scoreboard-body">
+                    <tbody>
                         <tr>
                             <td>Yellow Ace</td>
                             <td>1,250</td>
@@ -69,183 +67,153 @@ File role: Main frame file - Clean screen-based navigation -->
     <!-- Start Game Screen -->
     <div id="start-game" class="screen" data-screen="start-game">
         <header class="screen-header">
-            <h2 class="screen-title">Game Setup</h2>
-            <button class="exit-btn" id="start-game-exit" data-action="exit">
-                <span class="exit-icon">✕</span>
-                <span class="exit-text">Back to Menu</span>
+            <h2 class="h2">Game Setup</h2>
+            <button class="button secondary focusable" id="start-game-exit" data-action="exit">
+                ✕ Back to Menu
             </button>
         </header>
 
         <main class="screen-content">
             <div class="game-setup-container">
                 <div class="players-section">
-                    <h3 class="section-title">Players Configuration</h3>
+                    <h3 class="h3">Players Configuration</h3>
                     
                     <div class="player-grid">
-                        <div class="player-card" data-player="1">
-                            <div class="player-header">
-                                <h4 class="player-title">Player 1</h4>
+                        <!-- Player 1 - Yellow -->
+                        <div class="card player-card" data-player="1">
+                            <header class="player-header">
+                                <h4 class="h4">Player 1</h4>
                                 <div class="player-color yellow"></div>
-                            </div>
+                            </header>
                             
-                            <div class="player-controls">
-                                <div class="control-group">
-                                    <label class="control-label">Name</label>
-                                    <input type="text" class="player-name focusable" placeholder="Yellow Ace" maxlength="12">
+                            <div class="stack">
+                                <label class="body-text">Name</label>
+                                <input type="text" class="focusable" placeholder="Yellow Ace" maxlength="12">
+                                
+                                <label class="body-text">Control</label>
+                                <div class="button-group focusable" data-control="player-type">
+                                    <button class="button active" data-value="human">Human</button>
+                                    <button class="button" data-value="ai">AI</button>
+                                    <button class="button" data-value="off">Off</button>
                                 </div>
                                 
-                                <div class="control-group">
-                                    <label class="control-label">Control</label>
-                                    <div class="button-group focusable" data-control="player-type">
-                                        <button class="control-btn active" data-value="human">Human</button>
-                                        <button class="control-btn" data-value="ai">AI</button>
-                                        <button class="control-btn" data-value="off">Off</button>
-                                    </div>
+                                <label class="body-text">Plane Type</label>
+                                <div class="button-group focusable" data-control="plane-type">
+                                    <button class="button active" data-value="fighter">Fighter</button>
+                                    <button class="button" data-value="bomber">Bomber</button>
+                                    <button class="button" data-value="scout">Scout</button>
                                 </div>
-                                
-                                <div class="control-group">
-                                    <label class="control-label">Plane</label>
-                                    <div class="button-group focusable" data-control="plane-type">
-                                        <button class="control-btn active" data-value="fighter">Fighter</button>
-                                        <button class="control-btn" data-value="bomber">Bomber</button>
-                                        <button class="control-btn" data-value="scout">Scout</button>
-                                    </div>
-                                </div>
-                                
-
                             </div>
                         </div>
 
-                        <!-- Duplicate for other players with different colors -->
-                        <div class="player-card" data-player="2">
-                            <div class="player-header">
-                                <h4 class="player-title">Player 2</h4>
+                        <!-- Player 2 - Red -->
+                        <div class="card player-card" data-player="2">
+                            <header class="player-header">
+                                <h4 class="h4">Player 2</h4>
                                 <div class="player-color red"></div>
-                            </div>
-                            <!-- Same control structure -->
-                            <div class="player-controls">
-                                <div class="control-group">
-                                    <label class="control-label">Name</label>
-                                    <input type="text" class="player-name focusable" placeholder="Red Baron" maxlength="12">
+                            </header>
+                            
+                            <div class="stack">
+                                <label class="body-text">Name</label>
+                                <input type="text" class="focusable" placeholder="Red Baron" maxlength="12">
+                                
+                                <label class="body-text">Control</label>
+                                <div class="button-group focusable" data-control="player-type">
+                                    <button class="button active" data-value="human">Human</button>
+                                    <button class="button" data-value="ai">AI</button>
+                                    <button class="button" data-value="off">Off</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Control</label>
-                                    <div class="button-group focusable" data-control="player-type">
-                                        <button class="control-btn active" data-value="human">Human</button>
-                                        <button class="control-btn" data-value="ai">AI</button>
-                                        <button class="control-btn" data-value="off">Off</button>
-                                    </div>
+                                
+                                <label class="body-text">Plane Type</label>
+                                <div class="button-group focusable" data-control="plane-type">
+                                    <button class="button active" data-value="fighter">Fighter</button>
+                                    <button class="button" data-value="bomber">Bomber</button>
+                                    <button class="button" data-value="scout">Scout</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Plane</label>
-                                    <div class="button-group focusable" data-control="plane-type">
-                                        <button class="control-btn active" data-value="fighter">Fighter</button>
-                                        <button class="control-btn" data-value="bomber">Bomber</button>
-                                        <button class="control-btn" data-value="scout">Scout</button>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
 
-                        <!-- Green and Blue players follow same pattern -->
-                        <div class="player-card" data-player="3">
-                            <div class="player-header">
-                                <h4 class="player-title">Player 3</h4>
+                        <!-- Player 3 - Green -->
+                        <div class="card player-card" data-player="3">
+                            <header class="player-header">
+                                <h4 class="h4">Player 3</h4>
                                 <div class="player-color green"></div>
-                            </div>
-                            <div class="player-controls">
-                                <!-- Same structure as above -->
-                                <div class="control-group">
-                                    <label class="control-label">Name</label>
-                                    <input type="text" class="player-name focusable" placeholder="Green Eagle" maxlength="12">
+                            </header>
+                            
+                            <div class="stack">
+                                <label class="body-text">Name</label>
+                                <input type="text" class="focusable" placeholder="Green Eagle" maxlength="12">
+                                
+                                <label class="body-text">Control</label>
+                                <div class="button-group focusable" data-control="player-type">
+                                    <button class="button" data-value="human">Human</button>
+                                    <button class="button" data-value="ai">AI</button>
+                                    <button class="button active" data-value="off">Off</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Control</label>
-                                    <div class="button-group focusable" data-control="player-type">
-                                        <button class="control-btn" data-value="human">Human</button>
-                                        <button class="control-btn" data-value="ai">AI</button>
-                                        <button class="control-btn active" data-value="off">Off</button>
-                                    </div>
+                                
+                                <label class="body-text">Plane Type</label>
+                                <div class="button-group focusable" data-control="plane-type">
+                                    <button class="button active" data-value="fighter">Fighter</button>
+                                    <button class="button" data-value="bomber">Bomber</button>
+                                    <button class="button" data-value="scout">Scout</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Plane</label>
-                                    <div class="button-group focusable" data-control="plane-type">
-                                        <button class="control-btn active" data-value="fighter">Fighter</button>
-                                        <button class="control-btn" data-value="bomber">Bomber</button>
-                                        <button class="control-btn" data-value="scout">Scout</button>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
 
-                        <div class="player-card" data-player="4">
-                            <div class="player-header">
-                                <h4 class="player-title">Player 4</h4>
+                        <!-- Player 4 - Blue -->
+                        <div class="card player-card" data-player="4">
+                            <header class="player-header">
+                                <h4 class="h4">Player 4</h4>
                                 <div class="player-color blue"></div>
-                            </div>
-                            <div class="player-controls">
-                                <div class="control-group">
-                                    <label class="control-label">Name</label>
-                                    <input type="text" class="player-name focusable" placeholder="Blue Sky" maxlength="12">
+                            </header>
+                            
+                            <div class="stack">
+                                <label class="body-text">Name</label>
+                                <input type="text" class="focusable" placeholder="Blue Sky" maxlength="12">
+                                
+                                <label class="body-text">Control</label>
+                                <div class="button-group focusable" data-control="player-type">
+                                    <button class="button" data-value="human">Human</button>
+                                    <button class="button" data-value="ai">AI</button>
+                                    <button class="button active" data-value="off">Off</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Control</label>
-                                    <div class="button-group focusable" data-control="player-type">
-                                        <button class="control-btn" data-value="human">Human</button>
-                                        <button class="control-btn" data-value="ai">AI</button>
-                                        <button class="control-btn active" data-value="off">Off</button>
-                                    </div>
+                                
+                                <label class="body-text">Plane Type</label>
+                                <div class="button-group focusable" data-control="plane-type">
+                                    <button class="button active" data-value="fighter">Fighter</button>
+                                    <button class="button" data-value="bomber">Bomber</button>
+                                    <button class="button" data-value="scout">Scout</button>
                                 </div>
-                                <div class="control-group">
-                                    <label class="control-label">Plane</label>
-                                    <div class="button-group focusable" data-control="plane-type">
-                                        <button class="control-btn active" data-value="fighter">Fighter</button>
-                                        <button class="control-btn" data-value="bomber">Bomber</button>
-                                        <button class="control-btn" data-value="scout">Scout</button>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="game-settings-section">
-                    <h3 class="section-title">Game Settings</h3>
+                    <h3 class="h3">Game Settings</h3>
                     
-                    <div class="game-settings-grid">
-                        <div class="setting-group">
-                            <label class="control-label">Map Type</label>
-                            <div class="button-group focusable" data-control="map-type">
-                                <button class="control-btn active" data-value="forest">Forest</button>
-                                <button class="control-btn" data-value="beach">Beach</button>
-                                <button class="control-btn" data-value="snow">Snow</button>
-                                <button class="control-btn" data-value="desert">Desert</button>
-                            </div>
+                    <div class="stack">
+                        <label class="body-text">Map Type</label>
+                        <div class="button-group focusable" data-control="map-type">
+                            <button class="button active" data-value="forest">Forest</button>
+                            <button class="button" data-value="beach">Beach</button>
+                            <button class="button" data-value="snow">Snow</button>
+                            <button class="button" data-value="desert">Desert</button>
                         </div>
                         
-                        <div class="setting-group">
-                            <label class="control-label">Lives</label>
-                            <input type="range" class="setting-slider focusable" min="1" max="10" value="3" data-setting="lives">
+                        <label class="body-text">Lives</label>
+                        <input type="range" class="focusable" min="1" max="10" value="3" data-setting="lives">
+                        
+                        <label class="body-text">Match Duration</label>
+                        <div class="button-group focusable" data-control="duration">
+                            <button class="button" data-value="5">5 min</button>
+                            <button class="button active" data-value="10">10 min</button>
+                            <button class="button" data-value="15">15 min</button>
+                            <button class="button" data-value="unlimited">∞</button>
                         </div>
                         
-                        <div class="setting-group">
-                            <label class="control-label">Match Duration</label>
-                            <div class="button-group focusable" data-control="duration">
-                                <button class="control-btn" data-value="5">5 min</button>
-                                <button class="control-btn active" data-value="10">10 min</button>
-                                <button class="control-btn" data-value="15">15 min</button>
-                                <button class="control-btn" data-value="unlimited">Unlimited</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="start-section">
-                        <button class="start-game-btn focusable" id="launch-game">
-                            <span class="start-icon">🚀</span>
-                            <span class="start-text">Launch Game!</span>
+                        <button class="button success focusable launch-btn" id="launch-game">
+                            🚀 Launch Game!
                         </button>
                     </div>
                 </div>
@@ -256,29 +224,22 @@ File role: Main frame file - Clean screen-based navigation -->
     <!-- Configurations Screen -->
     <div id="configurations" class="screen" data-screen="configurations">
         <header class="screen-header">
-            <h2 class="screen-title">Configurations</h2>
-            <button class="exit-btn" id="configurations-exit" data-action="exit">
-                <span class="exit-icon">✕</span>
-                <span class="exit-text">Back to Menu</span>
+            <h2 class="h2">Configurations</h2>
+            <button class="button secondary focusable" id="configurations-exit" data-action="exit">
+                ✕ Back to Menu
             </button>
         </header>
 
         <main class="screen-content">
             <div class="config-container">
-                <section class="config-section">
-                    <h3 class="section-title">Key Bindings</h3>
-                    <div class="keybind-grid">
-                        <!-- Key binding controls will go here -->
-                        <p class="placeholder-text">Key binding configuration coming soon...</p>
-                    </div>
+                <section class="card config-section">
+                    <h3 class="h3">Key Bindings</h3>
+                    <p class="body-text">Key binding configuration coming soon...</p>
                 </section>
 
-                <section class="config-section">
-                    <h3 class="section-title">Audio Settings</h3>
-                    <div class="audio-grid">
-                        <!-- Audio controls will go here -->
-                        <p class="placeholder-text">Audio settings coming soon...</p>
-                    </div>
+                <section class="card config-section">
+                    <h3 class="h3">Audio Settings</h3>
+                    <p class="body-text">Audio settings coming soon...</p>
                 </section>
             </div>
         </main>
