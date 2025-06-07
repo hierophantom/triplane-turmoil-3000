@@ -1,3 +1,6 @@
+03
+navigation and layout fixes
+
 02
 Save briefing room state
 Keyboard control for BR set!

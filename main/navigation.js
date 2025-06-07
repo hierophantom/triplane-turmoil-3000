@@ -23,7 +23,6 @@ class NavigationController {
   setup() {
     this.setupKeyboardBindings();
     this.setupClickHandlers();
-    this.setupFocusStyles();
     this.activateScreen('main-menu');
   }
 
@@ -79,13 +78,12 @@ class NavigationController {
 
   getElementType(element) {
     if (element.classList.contains('menu-item')) return 'menu-item';
-    if (element.classList.contains('exit-btn')) return 'exit-btn';
-    if (element.classList.contains('start-game-btn')) return 'action-btn';
+    if (element.classList.contains('button') && element.dataset.action === 'exit') return 'exit-btn';
+    if (element.classList.contains('launch-btn')) return 'action-btn';
     if (element.classList.contains('button-group')) return 'button-group';
-    if (element.classList.contains('player-name')) return 'text-input';
-    if (element.classList.contains('resource-slider')) return 'slider';
-    if (element.classList.contains('setting-slider')) return 'slider';
-    return 'unknown';
+    if (element.tagName === 'INPUT' && element.type === 'text') return 'text-input';
+    if (element.tagName === 'INPUT' && element.type === 'range') return 'slider';
+    return 'button';
   }
 
   /*--------------------
@@ -126,7 +124,7 @@ class NavigationController {
     
     // Special handling for button groups
     if (item.type === 'button-group') {
-      const activeBtn = item.element.querySelector('.control-btn.active');
+      const activeBtn = item.element.querySelector('.button.active');
       if (activeBtn) {
         activeBtn.classList.add('kb-focused-active');
       }
@@ -138,7 +136,7 @@ class NavigationController {
     
     // Special handling for button groups
     if (item.type === 'button-group') {
-      const buttons = item.element.querySelectorAll('.control-btn');
+      const buttons = item.element.querySelectorAll('.button');
       buttons.forEach(btn => btn.classList.remove('kb-focused-active'));
     }
   }
@@ -222,8 +220,8 @@ class NavigationController {
   }
 
   adjustButtonGroup(buttonGroup, direction) {
-    const buttons = buttonGroup.querySelectorAll('.control-btn');
-    const activeButton = buttonGroup.querySelector('.control-btn.active');
+    const buttons = buttonGroup.querySelectorAll('.button');
+    const activeButton = buttonGroup.querySelector('.button.active');
     
     if (!activeButton || buttons.length === 0) return;
 
@@ -354,67 +352,21 @@ class NavigationController {
 
     // Exit buttons
     document.addEventListener('click', (e) => {
-      if (e.target.closest('.exit-btn')) {
+      if (e.target.closest('[data-action="exit"]')) {
         this.handleExit();
       }
     });
 
     // Button groups
     document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('control-btn')) {
+      if (e.target.matches('.button-group .button')) {
         const buttonGroup = e.target.closest('.button-group');
-        const buttons = buttonGroup.querySelectorAll('.control-btn');
+        const buttons = buttonGroup.querySelectorAll('.button');
         
         buttons.forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
       }
     });
-  }
-
-  /*--------------------
-    VISUAL STYLES
-  --------------------*/
-
-  setupFocusStyles() {
-    if (!document.getElementById('navigation-focus-styles')) {
-      const style = document.createElement('style');
-      style.id = 'navigation-focus-styles';
-      style.textContent = `
-        .kb-focused {
-          outline: 3px solid #f39c12 !important;
-          outline-offset: 2px !important;
-          box-shadow: 0 0 8px rgba(243, 156, 18, 0.6) !important;
-        }
-        
-        .kb-focused-active {
-          outline: 3px solid #e74c3c !important;
-          outline-offset: 2px !important;
-          box-shadow: 0 0 8px rgba(231, 76, 60, 0.6) !important;
-        }
-        
-        .kb-editing {
-          outline: 3px solid #2ecc71 !important;
-          outline-offset: 2px !important;
-          box-shadow: 0 0 8px rgba(46, 204, 113, 0.6) !important;
-          animation: pulse-edit 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes pulse-edit {
-          0%, 100% { box-shadow: 0 0 8px rgba(46, 204, 113, 0.6); }
-          50% { box-shadow: 0 0 12px rgba(46, 204, 113, 0.9); }
-        }
-        
-        .menu-item.kb-focused {
-          transform: scale(1.02);
-          transition: transform 0.2s ease;
-        }
-        
-        .button-group.kb-focused {
-          background: rgba(243, 156, 18, 0.1) !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
   }
 }
 
