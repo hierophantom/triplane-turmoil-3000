@@ -1,5 +1,5 @@
 //File name and path: main/navigation.js
-//File role: Clean screen navigation system
+//File role: Clean screen navigation system with game integration
 
 class NavigationController {
   constructor() {
@@ -37,11 +37,6 @@ class NavigationController {
     document.querySelectorAll('.screen').forEach(screen => {
       screen.classList.remove('active');
     });
-   
-    // Special handling for game screen
-    if (screenId === 'game' && typeof window.initializeGame === 'function') {
-      window.initializeGame();
-    }
     
     // Show target screen
     const targetScreen = document.getElementById(screenId);
@@ -49,10 +44,31 @@ class NavigationController {
       targetScreen.classList.add('active');
       this.currentScreen = screenId;
       
-      // Reset navigation state
+      // Special handling for game screen
+      if (screenId === 'game') {
+        this.initializeGame();
+        return; // Don't set up normal navigation for game screen
+      }
+      
+      // Reset navigation state for non-game screens
       this.currentMode = 'navigation';
       this.buildFocusableElements();
       this.setFocus(0);
+    }
+  }
+
+  initializeGame() {
+    console.log('Initializing game...');
+    // Initialize game engine when screen activates
+    if (typeof window.initializeGame === 'function') {
+      window.initializeGame();
+    } else {
+      // Direct initialization if function not available
+      setTimeout(() => {
+        if (!window.gameEngine) {
+          window.gameEngine = new GameEngine();
+        }
+      }, 100);
     }
   }
 
@@ -83,7 +99,7 @@ class NavigationController {
 
   getElementType(element) {
     if (element.classList.contains('menu-item')) return 'menu-item';
-    if (element.classList.contains('button') && element.dataset.action === 'exit') return 'exit-btn';
+    if (element.dataset.action === 'exit') return 'exit-btn';
     if (element.classList.contains('launch-btn')) return 'action-btn';
     if (element.classList.contains('button-group')) return 'button-group';
     if (element.tagName === 'INPUT' && element.type === 'text') return 'text-input';
@@ -169,10 +185,6 @@ class NavigationController {
       case 'text-input':
         this.enterEditMode(current);
         break;
-      case 'launch-game':
-        console.log('Launching game!');
-        this.activateScreen('game'); // ← Change this line
-        break;
       default:
         // For other elements, just trigger click
         current.element.click();
@@ -195,6 +207,11 @@ class NavigationController {
   }
 
   handleExit() {
+    // Clean up game if exiting from game screen
+    if (this.currentScreen === 'game' && window.gameEngine) {
+      window.gameEngine.stop();
+    }
+    
     // Always return to main menu
     this.activateScreen('main-menu');
   }
@@ -205,7 +222,7 @@ class NavigationController {
     switch (id) {
       case 'launch-game':
         console.log('Launching game!');
-        // TODO: Launch actual game
+        this.activateScreen('game');
         break;
       default:
         element.click();
@@ -294,7 +311,7 @@ class NavigationController {
     console.log('Setting up keyboard bindings');
 
     Mousetrap.bind('up', (e) => {
-      if (this.currentMode === 'navigation') {
+      if (this.currentMode === 'navigation' && this.currentScreen !== 'game') {
         e.preventDefault();
         this.navigateUp();
         return false;
@@ -302,7 +319,7 @@ class NavigationController {
     });
 
     Mousetrap.bind('down', (e) => {
-      if (this.currentMode === 'navigation') {
+      if (this.currentMode === 'navigation' && this.currentScreen !== 'game') {
         e.preventDefault();
         this.navigateDown();
         return false;
@@ -310,7 +327,7 @@ class NavigationController {
     });
 
     Mousetrap.bind('left', (e) => {
-      if (this.currentMode === 'navigation') {
+      if (this.currentMode === 'navigation' && this.currentScreen !== 'game') {
         e.preventDefault();
         this.handleLeftRight(-1);
         return false;
@@ -318,7 +335,7 @@ class NavigationController {
     });
 
     Mousetrap.bind('right', (e) => {
-      if (this.currentMode === 'navigation') {
+      if (this.currentMode === 'navigation' && this.currentScreen !== 'game') {
         e.preventDefault();
         this.handleLeftRight(1);
         return false;
@@ -326,13 +343,15 @@ class NavigationController {
     });
 
     Mousetrap.bind('enter', (e) => {
-      e.preventDefault();
-      if (this.currentMode === 'editing') {
-        this.exitEditMode();
-      } else {
-        this.handleEnter();
+      if (this.currentScreen !== 'game') {
+        e.preventDefault();
+        if (this.currentMode === 'editing') {
+          this.exitEditMode();
+        } else {
+          this.handleEnter();
+        }
+        return false;
       }
-      return false;
     });
 
     Mousetrap.bind('escape', (e) => {
@@ -361,7 +380,7 @@ class NavigationController {
 
     // Exit buttons
     document.addEventListener('click', (e) => {
-      if (e.target.closest('[data-action="exit"]')) {
+      if (e.target.closest('[data-action="exit"]') || e.target.closest('#exit-game')) {
         this.handleExit();
       }
     });
@@ -374,6 +393,13 @@ class NavigationController {
         
         buttons.forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
+      }
+    });
+
+    // Launch game button
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#launch-game')) {
+        this.activateScreen('game');
       }
     });
   }

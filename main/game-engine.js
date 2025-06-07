@@ -459,8 +459,13 @@ class GameEngine {
 
 let gameEngine = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-});
+// Function to be called by navigation system
+window.initializeGame = () => {
+  if (!gameEngine) {
+    console.log('Starting game engine...');
+    gameEngine = new GameEngine();
+  }
+};
 
 // Make it available globally for debugging
 window.gameEngine = gameEngine;
